@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    command: ["start-dev"]
+    environment:
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "admin"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/keycloak-realm.json:/opt/keycloak/import/realm.json:ro
+    restart: unless-stopped
+
+  vault:
+    image: hashicorp/vault:1.12.2
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root-token-demo"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    ports:
+      - "8200:8200"
+    command: "server -dev -dev-root-token-id=root-token-demo"
+    volumes:
+      - ./docker/vault-policy.hcl:/vault/policy/vault-policy.hcl:ro
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2024-01-01T00-00-00Z
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: "minioadmin"
+      MINIO_ROOT_PASSWORD: "minioadmin"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  # SQL SERVER
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    restart: unless-stopped
+
+volumes:
+  minio-data:
