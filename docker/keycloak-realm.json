@@ -1,0 +1,34 @@
+{
+  "realm": "erp-migration",
+  "enabled": true,
+  "users": [
+    {
+      "username": "operador",
+      "enabled": true,
+      "credentials": [{ "value": "operadorpass", "type": "password" }],
+      "realmRoles": ["operador_migracion"]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "credentials": [{ "value": "adminpass", "type": "password" }],
+      "realmRoles": ["admin_migracion"]
+    }
+  ],
+  "realmRoles": [
+    { "name": "operador_migracion" },
+    { "name": "admin_migracion" }
+  ],
+  "clients": [
+    {
+      "clientId": "migration-client",
+      "publicClient": false,
+      "secret": "migration-secret",
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"]
+    }
+  ]
+}
