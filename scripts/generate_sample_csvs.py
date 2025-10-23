@@ -1,46 +1,43 @@
 # scripts/generate_sample_csvs.py
-import csv
+# scripts/generate_sample_csvs.py
 import os
-from datetime import datetime, timedelta
-from random import randint, choice, uniform
-import faker
+import pandas as pd
+from faker import Faker
+import random
 
-os.makedirs("data", exist_ok=True)
-fake = faker.Faker("es_ES")
+fake = Faker()
 
-CURRENCIES = ["PEN", "USD", "EUR"]
-BRANCHES = ["LIMA-CENTRO", "AREQUIPA", "CUSCO", "TRUJILLO", "CHICLAYO"]
+DATA_DIR = "data"
+os.makedirs(DATA_DIR, exist_ok=True)
 
-def generate_row(idx, start_date):
-    cliente_id = randint(1000000, 9999999)
-    return {
-        "record_id": idx,
-        "branch": choice(BRANCHES),
-        "client_id": cliente_id,
-        "client_name": fake.company(),
-        "document_type": choice(["DNI", "RUC", "PASAPORTE"]),
-        "document_id": str(randint(10000000, 99999999)),
-        "amount": f"{round(uniform(100.0, 10000.0), 2)}",
-        "currency": choice(CURRENCIES),
-        "date": (start_date + timedelta(days=randint(0,30))).strftime("%Y-%m-%d"),
-        "erp_table": choice(["invoices","payments","customers"])
-    }
+def generate_erp_dataset(index: int, n_rows: int = 50):
+    """Genera datos simulados de ERP bancario (clientes, transacciones, montos)."""
+    records = []
+    for _ in range(n_rows):
+        record = {
+            "id_cliente": fake.uuid4(),
+            "nombre": fake.name(),
+            "dni": fake.random_int(min=10000000, max=99999999),
+            "fecha_transaccion": fake.date_this_year().strftime("%Y-%m-%d"),
+            "tipo_transaccion": random.choice(["Deposito", "Retiro", "Pago de servicio", "Transferencia"]),
+            "monto": round(random.uniform(10.0, 5000.0), 2),
+            "moneda": random.choice(["PEN", "USD"]),
+            "estado": random.choice(["Procesado", "Pendiente", "Fallido"]),
+        }
+        records.append(record)
+    df = pd.DataFrame(records)
+    file_path = os.path.join(DATA_DIR, f"erp_data_{index:02}.csv")
+    df.to_csv(file_path, index=False, encoding="utf-8")
+    print(f"✅ Generado {file_path} ({len(df)} filas)")
+    return file_path
 
-def create_csv(file_path, rows=200, start_id=1, start_date=None):
-    if start_date is None:
-        start_date = datetime(2025, 9, 1)
-    with open(file_path, "w", newline='', encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "record_id","branch","client_id","client_name","document_type","document_id","amount","currency","date","erp_table"
-        ])
-        writer.writeheader()
-        for i in range(start_id, start_id + rows):
-            writer.writerow(generate_row(i, start_date))
+
+def main():
+    print("[*] Generando archivos de datos simulados...")
+    for i in range(1, 11):
+        generate_erp_dataset(i)
+    print("[✔] Generación completada. Archivos guardados en ./data/")
+
 
 if __name__ == "__main__":
-    base_start = 1
-    for n in range(1, 11):
-        fname = f"data/erp_data_{n:02d}.csv"
-        create_csv(fname, rows=150, start_id=base_start, start_date=datetime(2025,9,1))
-        base_start += 150
-    print("10 CSVs generated in ./data")
+    main()

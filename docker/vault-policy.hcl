@@ -2,3 +2,4 @@
 path "secret/data/erp/*" {
   capabilities = ["read", "list"]
 }
+
