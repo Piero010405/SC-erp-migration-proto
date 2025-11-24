@@ -1,5 +1,7 @@
 python-dotenv
 requests
 google-cloud-storage
+google-cloud-kms
+cryptography
 faker
 pandas
