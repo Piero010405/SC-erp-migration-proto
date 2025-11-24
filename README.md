@@ -1,4 +1,4 @@
-# SC-erp-migration-proto  
+# 📘 SC-erp-migration-proto
 
 **Seguridad en la Computación | Trabajo Final**
 
@@ -6,13 +6,17 @@
 
 ## 🧩 Descripción del Proyecto
 
-Este prototipo fue desarrollado como parte del curso **Seguridad en la Computación**, con el objetivo de **simular la migración segura de datos ERP bancarios desde un entorno local hacia la nube (Google Cloud Platform - GCP)**.
+Este prototipo fue desarrollado como parte del curso **Seguridad en la Computación**, con el objetivo de **simular un pipeline seguro de migración de datos ERP** desde un entorno local hacia **Google Cloud Platform (GCP)** utilizando buenas prácticas de seguridad modernas.
 
-El enfoque del trabajo está centrado en la **gestión de credenciales y accesos** durante la migración, aplicando conceptos de seguridad como:
-- Uso de **HashiCorp Vault** para el almacenamiento seguro de secretos.
-- **Autenticación basada en tokens** para acceder a los secretos.
-- **Separación de entornos locales y nube** para reducir exposición de claves.
-- **Pipeline automatizado** que garantiza integridad y trazabilidad de los datos migrados.
+La solución implementada integra:
+
+- **Cifrado con Envelope Encryption (DEK + KMS)**  
+- **Gestión de secretos con HashiCorp Vault**  
+- **Service Accounts con privilegios mínimos en GCP**  
+- **Pipeline automatizado en Python**, robusto y auditable  
+- **Subida final a Google Cloud Storage (GCS)** validando integridad y seguridad extremo a extremo  
+
+Todo el proceso refleja estándares recomendados por **NIST**, **Google Cloud Security Foundations** y prácticas corporativas para migración de datos sensibles.
 
 ---
 
@@ -20,45 +24,57 @@ El enfoque del trabajo está centrado en la **gestión de credenciales y accesos
 
 ```text
 ┌─────────────────────┐
-│     Local ERP DB    │
-│ (simulada con CSVs) │
+│ Datos ERP locales │
+│ (archivos CSV) │
 └─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│  Pipeline seguro    │
-│ (Python + Vault +   │
-│  API GCS)           │
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│ Google Cloud Storage│
-│ (erp-migration-bucket)
-└─────────────────────┘
+│
+▼
+┌─────────────────────────┐
+│ Pipeline seguro Python │
+│ 1. Obtiene credenciales │
+│ desde Vault │
+│ 2. Genera DEK local │
+│ 3. Cifra DEK con KMS │
+│ 4. Cifra CSV con AES-GCM│
+│ 5. Sube .enc + DEK + │
+│ metadata a GCS │
+└─────────┬───────────────┘
+│
+▼
+┌─────────────────────────┐
+│ Google Cloud Storage │
+│ /migration │
+│ ├─ encrypted_files │
+│ ├─ encrypted_dek │
+│ └─ metadata │
+└─────────────────────────┘
 ```
 
 ---
 
 ## 🧰 Stack Tecnológico
 
-| Componente | Tecnología | Uso |
-|-------------|-------------|-----|
-| Lenguaje principal | **Python 3.9+** | Scripts de migración y generación de datos |
-| Seguridad / Secret Manager | **HashiCorp Vault** (en Docker) | Almacenamiento de credenciales GCP |
-| Nube destino | **Google Cloud Storage (GCP)** | Destino de los archivos migrados |
-| Entorno local | **Docker Desktop + PowerShell** | Ejecución controlada y aislada |
-| Librerías Python | `requests`, `google-cloud-storage`, `faker`, `pandas`, `dotenv` | Migración, autenticación y generación de datasets |
+| Componente | Tecnología | Justificación |
+|-----------|------------|---------------|
+| **Lenguaje / Scripts** | Python 3.10+ | Flexibilidad, librerías oficiales GCP, maduro para pipelines |
+| **Gestión de secretos** | HashiCorp Vault | Estándar de la industria, evita exponer claves en .env o código |
+| **Cifrado** | Google Cloud KMS | Cifrado gestionado, claves rotables, auditoría nativa |
+| **Almacenamiento** | Google Cloud Storage | Durable, seguro, IAM granular |
+| **Contenedores** | Docker + Docker Compose | Aislamiento y reproducibilidad |
+| **Librerías Python** | `google-cloud-storage`, `google-cloud-kms`, `cryptography`, `faker` | Soporte oficial y robustez |
+| **Autenticación** | Service Accounts | Seguridad basada en identidad |
 
 ---
 
 ## 🚀 Objetivo del Prototipo
 
-**Simular un pipeline de migración seguro** desde datos ERP locales hacia GCP, aplicando buenas prácticas de seguridad en:
-1. **Gestión de credenciales y secretos.**
-2. **Autenticación y autorización controladas.**
-3. **Validación y manejo de errores en el proceso de subida.**
-4. **Uso responsable de entornos cloud.**
+El pipeline demuestra:
+
+- **Migración segura de información sensible (ERP)**
+- **Cifrado por capas (Envelope Encryption)**
+- **Autorización de acceso estricta**
+- **Aislamiento de secretos via Vault**
+- **Verificación completa de subida a GCS**
 
 ---
 
@@ -67,17 +83,19 @@ El enfoque del trabajo está centrado en la **gestión de credenciales y accesos
 ```text
 erp-migration-proto/
 ├─ docker/
-│  └─ vault-policy.hcl
+│ └─ vault-policy.hcl
 ├─ secrets/
-│  └─ gcp-sa.json                # Clave descargada desde GCP (Service Account)
+│ └─ gcp-sa.json
 ├─ scripts/
-│  ├─ generate_sample_csvs.py    # Genera datasets simulados ERP
-│  └─ migrate_to_gcs.py          # Pipeline de migración seguro
-├─ data/                         # CSVs generados localmente
-├─ .env                          # Variables de entorno
-├─ requirements.txt              # Dependencias Python
-├─ docker-compose.yml            # Configuración de Vault
-└─ README.md                     # Documentación del proyecto
+│ ├─ generate_sample_csvs.py
+│ ├─ migrate_to_gcs.py
+│ └─ encryption_utils.py
+├─ data/
+│ └─ *.csv
+├─ .env
+├─ requirements.txt
+├─ docker-compose.yml
+└─ README.md
 ```
 
 ---
@@ -86,12 +104,14 @@ erp-migration-proto/
 
 ```bash
 # Vault
+# Vault
 VAULT_ADDR=http://127.0.0.1:8200
 VAULT_TOKEN=root-token-demo
 VAULT_SECRET_PATH=secret/data/erp/gcs-service-account
 
 # GCP
-GCS_BUCKET=erp-migration-bucket
+GCS_BUCKET=erp-secure-bucket
+KMS_KEY_NAME=projects/PROJECT_ID/locations/us-central1/keyRings/erp-keyring/cryptoKeys/erp-kek
 CSV_DIR=data
 
 # Script runtime
@@ -143,17 +163,46 @@ python scripts/generate_sample_csvs.py
 ```
 Se crean 10 archivos en `data/erp_data_01.csv` … `erp_data_10.csv`.
 
-### 6️⃣ Ejecutar el pipeline seguro
+### 6️⃣ Migración Exitosa y Validación Final
+Una vez configurados GCP, Vault, las keys KMS y los secretos, se ejecutó el pipeline:
 ```powershell
 python scripts/migrate_to_gcs.py
 ```
-Migrará todos los CSV a GCP (`gs://erp-migration-bucket/migracion/`).
+El pipeline procesó:
+
+- 10 datasets ERP: erp_data_01.csv … erp_data_10.csv
+- 1 dataset adicional: sample_erp_data.csv
+- Y para cada archivo se generaron:
+
+| Tipo de archivo   | Contenido                       | Carpeta destino              |
+| ----------------- | ------------------------------- | ---------------------------- |
+| `*.enc`           | archivo ERP cifrado con AES-GCM | `migration/encrypted_files/` |
+| `*.dek.b64`       | DEK cifrada con KEK (KMS)       | `migration/encrypted_dek/`   |
+| `*.metadata.json` | nonce, tag GCM y parámetros     | `migration/metadata/`        |
+
 
 ### 7️⃣ Verificar en GCP
 Ir a [https://console.cloud.google.com/storage/browser](https://console.cloud.google.com/storage/browser)  
 y confirmar los archivos subidos.
 
+La estructura final en GCS quedó así:
+
+```text
+gs://erp-secure-bucket/migration/
+│
+├─ encrypted_files/
+│    ├─ erp_data_01.enc
+│    ├─ ...
+├─ encrypted_dek/
+│    ├─ erp_data_01.dek.b64
+│    ├─ ...
+└─ metadata/
+     ├─ erp_data_01.metadata.json
+     ├─ ...
+```
+
 ### 8️⃣ (Opcional) Apagar y limpiar
+
 ```powershell
 docker-compose down
 ```
