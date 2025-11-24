@@ -1,5 +1,5 @@
-````{"variant":"standard","title":"README.md - SC-erp-migration-proto","id":"98542"}
 # SC-erp-migration-proto  
+
 **Seguridad en la Computación | Trabajo Final**
 
 ---
@@ -185,4 +185,3 @@ docker-compose down
 ## 📄 Licencia
 
 Este proyecto es académico y se distribuye bajo la licencia **MIT**, únicamente con fines educativos.
-````
